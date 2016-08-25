@@ -9,7 +9,12 @@ OBJECTS = $(addprefix obj/, $(SOURCES:.cpp=.o))
 LIBRARY = event
 LIBS = $(addprefix -l, $(LIBRARY))
 
-$(LIBRARY): lib/lib$(LIBRARY).a
+$(LIBRARY): lib/lib$(LIBRARY).a setup
+
+setup: bin/.. include/.. lib/.. obj/.. src/..
+
+%/..:
+	mkdir $(@D)
 
 lib/lib%.a: $(OBJECTS)
 	ar rcs $@ $^
