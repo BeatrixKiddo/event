@@ -22,8 +22,8 @@ namespace Event
 		_signals.clear();
 	}
 	void Observer::detach(SignalAbstract* signal) noexcept {
-		const auto& found = std::find(_signals.begin(), _signals.end(), signal);
-		if (found != _signals.end()) {
+		const auto& found = std::find(std::begin(_signals), std::end(_signals), signal);
+		if (found != std::end(_signals)) {
 			_signals.erase(found);
 			signal->slotDetach(this);
 		}
@@ -32,6 +32,6 @@ namespace Event
 		_signals.emplace_back(signal);
 	}
 	void Observer::signalDetach(SignalAbstract* signal) noexcept {
-		_signals.erase(std::remove(_signals.begin(), _signals.end(), signal), _signals.end());
+		_signals.erase(std::remove(std::begin(_signals), std::end(_signals), signal), std::end(_signals));
 	}
 }
