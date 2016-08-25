@@ -18,7 +18,7 @@ obj/%.o: src/%.cpp include/%.hpp
 	$(CC) $(WFLAGS) $(CFLAGS) -c $< -o $@
 
 test: bin/test
-	
+
 bin/%: main.cpp lib/lib$(LIBRARY).a
 	$(CC) $(WFLAGS) $(CFLAGS) $(LFLAGS) -o $@ $< $(LIBS) -pthread
 
