@@ -9,6 +9,8 @@ OBJECTS = $(addprefix obj/, $(SOURCES:.cpp=.o))
 LIBRARY = event
 LIBS = $(addprefix -l, $(LIBRARY))
 
+.PRECIOUS: obj/%.o
+
 $(LIBRARY): lib/lib$(LIBRARY).a setup
 
 setup: bin/.. include/.. lib/.. obj/.. src/..
