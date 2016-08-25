@@ -31,7 +31,7 @@ namespace Event
 	{
 		std::vector<Slot<Return, Args...>> _slots;
 		virtual void slotDetach(Observer* observer) noexcept override final {
-			_slots.erase(std::remove_if(_slots.begin(), _slots.end(), [&](auto& slot) { return slot.observer() == observer; }), _slots.end());
+			_slots.erase(std::remove_if(std::begin(_slots), std::end(_slots), [&](auto& slot) { return slot.observer() == observer; }), std::end(_slots));
 		}
 		template <typename Return_ = Return, std::enable_if_t<std::is_void<Return_>::value>* = nullptr>
 		void callback(std::vector<Result<Return>>& results, Slot<Return, Args...>& slot, Args... args) {
@@ -47,8 +47,8 @@ namespace Event
 			detach();
 		}
 		void detach(Observer* observer) noexcept {
-			const auto& found = std::find_if(_slots.begin(), _slots.end(), [&](auto& slot) { return slot.observer() == observer; });
-			if (found != _slots.end()) {
+			const auto& found = std::find_if(std::begin(_slots), std::end(_slots), [&](auto& slot) { return slot.observer() == observer; });
+			if (found != std::end(_slots)) {
 				_slots.erase(found);
 				observer->signalDetach(this);
 			}
@@ -61,8 +61,8 @@ namespace Event
 		template <typename Class>
 		void attach(Class* observer, Return(Class::*method)(Args...)) {
 			auto&& newSlot = Slot<Return, Args...>(observer, method);
-			const auto& found = std::find_if(_slots.begin(), _slots.end(), [&](const auto& slot) { return slot == newSlot; });
-			if (found == _slots.end()) {
+			const auto& found = std::find_if(std::begin(_slots), std::end(_slots), [&](const auto& slot) { return slot == newSlot; });
+			if (found == std::end(_slots)) {
 				_slots.emplace_back(std::move(newSlot));
 				observer->signalAttach(this);
 			}
