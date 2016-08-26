@@ -1,0 +1,64 @@
+1. Abstract
+
+A single-threaded exception-safe signal-slot library for integrating events with callback handlers loosely and dynamically.
+
+2. Requirements
+
+- c++14
+- gcc 4.9.3
+
+3. Building
+
+Run the makefile and all the directories, objects, and libraries should be made. Link to the library as you would any other library and include the relevant headers when you want to use the library.
+
+4. Using
+
+All classes in the library belong in the Event namespace.
+
+Relevant classes:
+- Event::Observer
+- Event::Result<Type>
+- Event::Signal<ResultPolicy, ReturnValue, Parameters...>
+
+Observer is an inherited class. Derive any class you want to handle signal events from Observer. Signals can attach themselves to observers with a given member function that will handle the event when it signals.
+
+Signal is a class that you instantiate as objects in places that need to emit a signal to be handled by zero or more observers. Signals can only be handled by functions that match their ReturnValue and Parameters... template values, otherwise compiler errors will be issued. ResultPolicy is a special flag that determines whether or not you want to view the results of the handling of a particular signal. This is particularly useful when a handler returns a value or can potentially throw an exception. IMPORTANT NOTE: If a callback throws an exception while handling a signal that ignores results, that exception will be quietly ignored! It is up to you to make absolutely sure you are using the appropriate callback type with the appropriate signal type. In otherwords, only use Results::Ignore for handlers that are noexcept and use Results::Return for handlers that propagate exceptions upward or that have return values.
+
+Result is a class that only appears when a signal is flagged Results::Return. You can inspect a signal's handling results after emitting the signal. Results that are valid will have a return value. Results that are invalid will have an error message. How you handle invalid results is up to you. Results are merely a reporting mechanism to help you gauge the handling of events.
+
+Example 1:
+struct Dog : Event::Observer { // derive from observer to be attached to signals
+	void woof() noexcept { cout << "woof woof"; } // this callback will handle an event when signaled
+};
+
+struct Cat : Event::Observer { // derive from observer to be attached to signals
+	void meow() noexcept { cout << "meow meow"; } // this callback will handle an event when signaled
+};
+
+auto&& alerted = Event::Signal<Results::Ignore, void>(); // a signal that ignores results (void and/or noexcept handlers), returns void, and takes zero parameters
+auto&& dog = Dog();
+auto&& cat = Cat();
+alerted.attach(&dog, &Dog::woof); // attach the observer and handler to signal
+alerted.attach(&cat, &Cat::meow); // attach the observer and handler to signal
+alerted(); // output: woof woof; meow meow
+
+Example 2:
+struct ErrorProneAccountant : Event::Observer {
+	int count(int iterations) {
+		if (iterations > 9000)
+			throw TooHighToCount(iterations);
+		else
+			return iterations;
+	} // this callback will either return a value or it will throw an exception, either of which you can inspect in the results
+};
+
+auto&& prompted = Event::Signal<Results::Return, int, int>(); // a signal that returns results (int and/or exception-throwing handlers), returns int, and takes 1 parameter
+auto&& accountant = ErrorProneAccountant();
+auto&& results = prompted(0); // returns 1 valid result with value 0
+results = prompted(100); // returns 1 valid result with value 100
+results = prompted(42); // returns 1 result with value 42
+results = prompted(1000000); // returns 1 invalid result with error message provided by TooHighToCount
+
+5. Contributing
+
+If you want to contribute, that would be great. All contributions will be bound with the provided license. The project could use multi-threaded capabilities, but I don't have the time or desire to delve that deep into making that a reality, so if someone is willing to do that, that would be a valuable contribution to the project. Otherwise, any other contributions should be in the form of code improvements in terms of efficiency and readability. No other features are needed or will be considered unless you give a very compelling reason.
