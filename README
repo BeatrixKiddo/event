@@ -20,7 +20,7 @@ Relevant classes:
 - Event::Result<Type>
 - Event::Signal<ResultPolicy, ReturnValue, Parameters...>
 
-Observer is an inherited class. Derive any class you want to handle signal events from Observer. Signals can attach themselves to observers with a given member function that will handle the event when it signals.
+Observer is an inherited class. Derive any class you want to handle signal events from Observer. Signals can attach themselves to observers with a given member function that will handle the event when it signals. Observers will automatically detach themselves from signals when they are destroyed and signals will automatically detach themselves from oberservers when they are destroyed; on destruction of either object, all attached parties will be notified and detached automatically. If you want to manually detach obersvers/signals, both classes have a detach method that takes the other class as a parameter to detach that specific reference.
 
 Signal is a class that you instantiate as objects in places that need to emit a signal to be handled by zero or more observers. Signals can only be handled by functions that match their ReturnValue and Parameters... template values, otherwise compiler errors will be issued. ResultPolicy is a special flag that determines whether or not you want to view the results of the handling of a particular signal. This is particularly useful when a handler returns a value or can potentially throw an exception. IMPORTANT NOTE: If a callback throws an exception while handling a signal that ignores results, that exception will be quietly ignored! It is up to you to make absolutely sure you are using the appropriate callback type with the appropriate signal type. In otherwords, only use Results::Ignore for handlers that are noexcept and use Results::Return for handlers that propagate exceptions upward or that have return values.
 
@@ -54,10 +54,26 @@ struct ErrorProneAccountant : Event::Observer {
 
 auto&& prompted = Event::Signal<Results::Return, int, int>(); // a signal that returns results (int and/or exception-throwing handlers), returns int, and takes 1 parameter
 auto&& accountant = ErrorProneAccountant();
+prompted.attach(&accountant, &ErrorProneAccountant::count);
 auto&& results = prompted(0); // returns 1 valid result with value 0
 results = prompted(100); // returns 1 valid result with value 100
 results = prompted(42); // returns 1 result with value 42
 results = prompted(1000000); // returns 1 invalid result with error message provided by TooHighToCount
+
+Example 3:
+auto&& signal = Event::Signal<...>();
+auto&& observer = MyObserver();
+signal.attach(&observer, &MyObserver::handler);
+// --- detach using: ---
+signal.detach(&observer);
+// --- OR ---
+observer.detach(&signal);
+// --- OR ---
+signal.detach();
+// --- OR ---
+observer.detach();
+// --- OR ---
+// let the objects fall out of scope and they will automatically detach themselves respectively through their destructors
 
 5. Contributing
 
